@@ -73,6 +73,12 @@
   - **✨ 회원가입 전환 안내 카드 강화**: 모달 하단에 블루 신규 혜택 안내 카드를 배치하고 `[회원가입 전용 페이지로 이동]` 버튼 및 탭 스위처를 제공하여 회원가입 접근성 및 명확성 대폭 향상.
   - **🎨 딥 네이비 & 새파이어 럭셔리 스타일링**: 카드 섀도우, 둥근 모서리, 포커스 아웃라인 및 세련된 브랜드 헤더 뱃지 탑재.
 
+### 2.6. 전역 서체 명조체(Noto Serif KR) 변경 적용 (`index.html` & `index.css`)
+- **작업 브랜치**: `feature/serif-font-style` 신규 생성 후 PR 워크플로우 준수
+- **개선 내역**:
+  - Google Fonts 구글 폰트 `Noto Serif KR` 웹폰트 패키지([index.html](file:///c:/Users/김재성/OneDrive/바탕 화면/midcampus/Gangjubang-main/Gangjubang-main/index.html)) 탑재
+  - CSS 전역 시스템 서체 변수(`--font-primary`, `--font-serif`)를 `Noto Serif KR`, `Nanum Myeongjo`, `Batang`, `serif` 명조 서체 라인으로 교체하여 클래식하고 품격 있는 브랜드 타이포그래피 완성
+
 ---
 
 ## 3. 하네스 4대 검증 결과 (Git Push Guard Check)
