@@ -1,8 +1,9 @@
 /* Design System: Gangjubang (강주방) */
 
 :root {
-  /* Fonts */
-  --font-primary: 'Noto Sans KR', sans-serif;
+  /* Fonts - Myeongjo (명조체) Serif Typography */
+  --font-serif: 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', serif;
+  --font-primary: 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', serif;
   
   /* Color Palette - Premium Deep Navy Blue */
   --bg-main: #F8FAFC;          /* 세련되고 깨끗한 슬레이트 블루 틴트 배경 */
@@ -47,6 +48,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: var(--font-primary);
 }
 
 html {
@@ -61,6 +63,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
 }
 
 a {
