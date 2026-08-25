@@ -61,9 +61,9 @@
   - `framework`: `"vite"`
   - `buildCommand`: `"npm run build"`
   - `outputDirectory`: `"dist"`
-  - `rewrites`: `[{ "source": "/(.*)", "destination": "/index.html" }]` SPA 라우팅 리라이트 규칙 설정
+  - `rewrites`: 정적 자산(`/assets/`, 이미지, JS, CSS)을 제외하고 모든 SPA 동적 라우트 경로만 `/index.html`로 연결하는 부가 정규식(`source: "/((?!assets/|favicon.svg|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css)).*)"`) 탑재
 - **배포 검증 성과**:
-  - Vercel 배포 환경에서 `/admin/customers`, `/admin`, `/signup` 등 동적 클라이언트 라우트 직진입 및 페이지 새로고침(F5) 시 발생할 수 있는 404 NOT FOUND 에러 차단
+  - Vercel 배포 환경에서 `/admin/customers`, `/admin`, `/signup` 등 동적 클라이언트 라우트 직진입 및 페이지 새로고침(F5) 시 404 NOT FOUND 에러 및 JS/CSS MIME 타입 로딩 오류 완벽 차단
   - 프로덕션 번들 빌드(`dist/assets`) 정상 생성 및 1.2초 초고속 빌드 검증
 
 ---
