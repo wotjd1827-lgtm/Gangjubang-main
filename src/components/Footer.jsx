@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 const BASE = '/';
 
@@ -45,8 +44,8 @@ export default function Footer() {
 
       <style>{`
         .site-footer {
-          background: var(--color-charcoal);
-          color: rgba(255,255,255,0.6);
+          background: #071325;
+          color: rgba(255,255,255,0.7);
           padding: 60px 0 0;
         }
 
@@ -65,22 +64,22 @@ export default function Footer() {
         .footer-logo {
           width: 110px;
           height: auto;
-          filter: brightness(0) invert(1);
-          opacity: 0.8;
+          filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(37, 99, 235, 0.4));
+          opacity: 0.9;
           margin-bottom: 16px;
         }
 
         .footer-desc {
           font-size: 14px;
           line-height: 1.7;
-          color: rgba(255,255,255,0.45);
+          color: rgba(255,255,255,0.5);
         }
 
         .footer-links h5,
         .footer-contact h5 {
           font-size: 14px;
           font-weight: 700;
-          color: rgba(255,255,255,0.8);
+          color: #E2E8F0;
           margin-bottom: 16px;
           letter-spacing: 0.5px;
         }
@@ -88,26 +87,26 @@ export default function Footer() {
         .footer-links a {
           display: block;
           font-size: 14px;
-          color: rgba(255,255,255,0.45);
+          color: rgba(255,255,255,0.5);
           padding: 5px 0;
           transition: color 0.2s;
           text-decoration: none;
         }
 
         .footer-links a:hover {
-          color: var(--color-primary);
+          color: #60A5FA;
         }
 
         .footer-contact p {
           font-size: 14px;
-          color: rgba(255,255,255,0.45);
+          color: rgba(255,255,255,0.5);
           margin-bottom: 4px;
         }
 
         .footer-contact .phone {
           font-size: 20px;
           font-weight: 800;
-          color: var(--color-primary);
+          color: #38BDF8;
           margin-bottom: 4px;
         }
 
@@ -125,12 +124,12 @@ export default function Footer() {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: rgba(255,255,255,0.5);
+          color: rgba(255,255,255,0.7);
           transition: all 0.25s ease;
         }
 
         .footer-sns a:hover {
-          background: var(--color-primary);
+          background: #2563EB;
           color: #fff;
         }
 

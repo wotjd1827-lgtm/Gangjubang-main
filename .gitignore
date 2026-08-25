@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment Variables & Sensitive Keys
+.env
+.env.*
+.env.local
+mcp.json
+
+

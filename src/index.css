@@ -4,32 +4,32 @@
   /* Fonts */
   --font-primary: 'Noto Sans KR', sans-serif;
   
-  /* Color Palette - Warm & Premium */
-  --bg-main: #FAF7F2;          /* 따뜻하고 부드러운 베이지/아이보리 */
+  /* Color Palette - Premium Deep Navy Blue */
+  --bg-main: #F8FAFC;          /* 세련되고 깨끗한 슬레이트 블루 틴트 배경 */
   --bg-card: #FFFFFF;
-  --bg-card-glass: rgba(255, 253, 250, 0.85);
-  --color-primary: #C08261;     /* 메인 테라코타 웜 브라운 */
-  --color-primary-hover: #A0684B;
-  --color-primary-light: #F5EBE6;
-  --color-primary-dark: #6E473B;
-  --color-secondary: #9A7B56;   /* 샌드 브라운 */
-  --color-charcoal: #2E2925;    /* 부드러운 블랙 (메인 텍스트) */
-  --color-gray-dark: #5C544E;
-  --color-gray-medium: #A89F95;
-  --color-gray-light: #EBE5DF;
-  --color-gray-ultra: #F7F4F0;
+  --bg-card-glass: rgba(255, 255, 255, 0.88);
+  --color-primary: #0F2C59;     /* 메인 딥 네이비 블루 (신뢰감 넘치는 짙은 파랑) */
+  --color-primary-hover: #1E3E62;
+  --color-primary-light: #EFF6FF;
+  --color-primary-dark: #071931;
+  --color-secondary: #2563EB;   /* 선명한 사파이어 블루 악센트 */
+  --color-charcoal: #0F172A;    /* 선명한 미드나잇 숯색 (메인 텍스트) */
+  --color-gray-dark: #334155;
+  --color-gray-medium: #64748B;
+  --color-gray-light: #E2E8F0;
+  --color-gray-ultra: #F1F5F9;
   
   /* Status Colors */
-  --color-success: #6E8E75;     /* 올리브/세이지 그린 */
-  --color-warning: #D9A05B;     /* 따뜻한 골드 */
-  --color-danger: #C96F53;      /* 웜 코랄 레드 */
-  --color-info: #5B8D9D;        /* 파스텔 블루 */
+  --color-success: #10B981;     /* 세련된 에메랄드 그린 */
+  --color-warning: #F59E0B;     /* 골드 앰버 */
+  --color-danger: #EF4444;      /* 루비 레드 */
+  --color-info: #3B82F6;        /* 로열 블루 */
 
   /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(110, 71, 59, 0.04);
-  --shadow-md: 0 8px 24px rgba(110, 71, 59, 0.08);
-  --shadow-lg: 0 16px 40px rgba(110, 71, 59, 0.12);
-  --shadow-glow: 0 0 15px rgba(192, 130, 97, 0.3);
+  --shadow-sm: 0 2px 8px rgba(15, 44, 89, 0.05);
+  --shadow-md: 0 8px 24px rgba(15, 44, 89, 0.10);
+  --shadow-lg: 0 16px 40px rgba(15, 44, 89, 0.15);
+  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.35);
 
   /* Border Radii */
   --radius-sm: 6px;
@@ -91,9 +91,9 @@ button {
 }
 
 @keyframes pulseGlow {
-  0% { box-shadow: 0 0 0 0 rgba(192, 130, 97, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(192, 130, 97, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(192, 130, 97, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
 }
 
 .animate-fade-in {

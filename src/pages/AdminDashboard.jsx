@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { 
-  Users, DollarSign, ShoppingCart, UserPlus, 
-  TrendingUp, Star, Clock, ChevronRight 
+  Users, Clock, ShoppingBag, Award, FileText 
 } from 'lucide-react';
-import { getDashboardStats } from '../data/mockData';
+import { getDashboardStats, mockSalesHistory } from '../data/mockData';
 
 export default function AdminDashboard() {
   const { customers, inquiries } = useOutletContext();
@@ -52,7 +51,6 @@ export default function AdminDashboard() {
 
       setRecentLogs(prev => {
         const updated = [newLog, ...prev.map(log => {
-          // Age the existing logs slightly for effect
           if (log.time === "방금 전") return { ...log, time: "1분 전", highlight: false };
           if (log.time.endsWith("분 전")) {
             const minutes = parseInt(log.time) + 1;
@@ -60,220 +58,244 @@ export default function AdminDashboard() {
           }
           return log;
         })];
-        return updated.slice(0, 6); // Keep top 6
+        return updated.slice(0, 6);
       });
-    }, 15000); // Trigger every 15 seconds
+    }, 15000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const stats = getDashboardStats(liveCustomers);
+  const stats = useMemo(() => getDashboardStats(liveCustomers), [liveCustomers]);
+  const maxSales = useMemo(() => Math.max(...mockSalesHistory.map(m => m.sales)), []);
 
-  // Format currency
   const formatWon = (value) => {
-    return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' })
-      .format(value)
-      .replace('₩', '₩ ') + '원';
+    return new Intl.NumberFormat('ko-KR').format(value || 0) + '원';
   };
 
-  // Grade distributions calculations for SVG Pie
-  const { VIP, GOLD, SILVER, BRONZE } = stats.gradeDistribution;
-  const totalGrades = VIP + GOLD + SILVER + BRONZE;
-  
-  // Percentages
-  const pctVip = Math.round((VIP / totalGrades) * 100);
-  const pctGold = Math.round((GOLD / totalGrades) * 100);
-  const pctSilver = Math.round((SILVER / totalGrades) * 100);
-  const pctBronze = Math.round((BRONZE / totalGrades) * 100);
+  // Grade Distribution Calculation for SVG Donut Chart
+  const chartData = useMemo(() => {
+    const dist = stats.gradeDistribution || {};
+    const vipBiz = dist['VIP 업자'] || 0;
+    const biz = dist['일반 업자'] || 0;
+    const vipConsumer = dist['VIP 소비자'] || 0;
+    const consumer = dist['일반 소비자'] || 0;
+    
+    const totalGrades = (vipBiz + biz + vipConsumer + consumer) || 1;
+    
+    const pctVipBiz = Math.round((vipBiz / totalGrades) * 100);
+    const pctBiz = Math.round((biz / totalGrades) * 100);
+    const pctVipConsumer = Math.round((vipConsumer / totalGrades) * 100);
+    const pctConsumer = Math.round((consumer / totalGrades) * 100);
 
-  // Donut chart math (Radius: 70, Circumference: 439.8)
-  const r = 70;
-  const c = 2 * Math.PI * r; // ~439.82
-  
-  const strokeVip = (pctVip / 100) * c;
-  const strokeGold = (pctGold / 100) * c;
-  const strokeSilver = (pctSilver / 100) * c;
-  const strokeBronze = (pctBronze / 100) * c;
+    const r = 70;
+    const c = 2 * Math.PI * r;
+    
+    const strokeVipBiz = (pctVipBiz / 100) * c;
+    const strokeBiz = (pctBiz / 100) * c;
+    const strokeVipConsumer = (pctVipConsumer / 100) * c;
+    const strokeConsumer = (pctConsumer / 100) * c;
 
-  const offsetVip = 0;
-  const offsetGold = strokeVip;
-  const offsetSilver = strokeVip + strokeGold;
-  const offsetBronze = strokeVip + strokeGold + strokeSilver;
+    const offsetVipBiz = 0;
+    const offsetBiz = strokeVipBiz;
+    const offsetVipConsumer = strokeVipBiz + strokeBiz;
+    const offsetConsumer = strokeVipBiz + strokeBiz + strokeVipConsumer;
+
+    return {
+      vipBiz, biz, vipConsumer, consumer,
+      pctVipBiz, pctBiz, pctVipConsumer, pctConsumer,
+      r, c,
+      strokeVipBiz, strokeBiz, strokeVipConsumer, strokeConsumer,
+      offsetVipBiz, offsetBiz, offsetVipConsumer, offsetConsumer
+    };
+  }, [stats]);
+
+  const {
+    vipBiz, biz, vipConsumer, consumer,
+    pctVipBiz, pctBiz, pctVipConsumer, pctConsumer,
+    r, c,
+    strokeVipBiz, strokeBiz, strokeVipConsumer, strokeConsumer,
+    offsetVipBiz, offsetBiz, offsetVipConsumer, offsetConsumer
+  } = chartData;
+
+  const pendingInquiriesCount = liveInquiries.filter(i => i.status === '대기').length;
 
   return (
     <div className="dashboard-viewport animate-fade-in">
       <div className="dashboard-header-summary">
-        <h3 className="dashboard-title">대시보드 개요</h3>
-        <p className="dashboard-subtitle">강주방 CRM 실시간 핵심 운영 지표입니다.</p>
+        <h3 className="dashboard-title">강주방 통합 운영 대시보드</h3>
+        <p className="dashboard-subtitle">업소용 주방기기 거래 실적, 3D 도면 문의 및 B2B/B2C CRM 현황입니다.</p>
       </div>
 
-      {/* KPI Cards */}
+      {/* Top KPI Metrics */}
       <div className="kpi-grid">
-        {/* Total Customers */}
         <div className="kpi-card glass-card">
           <div className="kpi-icon-row">
-            <div className="kpi-icon bg-orange-light">
-              <Users size={20} className="text-orange" />
+            <div className="kpi-icon bg-navy-light">
+              <Users size={20} className="text-navy" />
             </div>
-            <span className="kpi-trend text-green">+4.2%</span>
+            <span className="kpi-trend text-blue">+4.2%</span>
           </div>
           <span className="kpi-value">{stats.totalCustomers}명</span>
-          <span className="kpi-label">전체 등록 고객 수</span>
+          <span className="kpi-label">전체 등록 고객 수 (B2B/B2C)</span>
         </div>
 
-        {/* Accumulated Sales */}
-        <div className="kpi-card glass-card">
-          <div className="kpi-icon-row">
-            <div className="kpi-icon bg-green-light">
-              <DollarSign size={20} className="text-green-dark" />
-            </div>
-            <span className="kpi-trend text-green">+12.8%</span>
-          </div>
-          <span className="kpi-value-small">{formatWon(stats.accumulatedSales)}</span>
-          <span className="kpi-label">누적 거래액</span>
-        </div>
-
-        {/* Total Transactions */}
         <div className="kpi-card glass-card">
           <div className="kpi-icon-row">
             <div className="kpi-icon bg-blue-light">
-              <ShoppingCart size={20} className="text-blue" />
+              <ShoppingBag size={20} className="text-blue" />
             </div>
-            <span className="kpi-trend text-green">+8.5%</span>
+            <span className="kpi-trend text-blue">+12.8%</span>
           </div>
-          <span className="kpi-value">{stats.totalTransactions}건</span>
-          <span className="kpi-label">총 누적 거래 건수</span>
+          <span className="kpi-value">{formatWon(stats.accumulatedSales)}</span>
+          <span className="kpi-label">누적 주방기기 거래 금액</span>
         </div>
 
-        {/* Average Transaction Value */}
         <div className="kpi-card glass-card">
           <div className="kpi-icon-row">
-            <div className="kpi-icon bg-purple-light">
-              <TrendingUp size={20} className="text-purple" />
+            <div className="kpi-icon bg-teal-light">
+              <FileText size={20} className="text-teal" />
             </div>
-            <span className="kpi-trend text-green">+1.2%</span>
+            <span className="kpi-trend text-orange">{pendingInquiriesCount}건 대기중</span>
           </div>
-          <span className="kpi-value-small">{formatWon(Math.round(stats.accumulatedSales / stats.totalTransactions))}</span>
-          <span className="kpi-label">거래 건당 평균 매출</span>
+          <span className="kpi-value">{liveInquiries.length}건</span>
+          <span className="kpi-label">3D 도면 & 견적 문의 접수</span>
+        </div>
+
+        <div className="kpi-card glass-card">
+          <div className="kpi-icon-row">
+            <div className="kpi-icon bg-gold-light">
+              <Award size={20} className="text-gold" />
+            </div>
+            <span className="kpi-trend text-blue">+3.1%</span>
+          </div>
+          <span className="kpi-value">
+            {formatWon(stats.totalTransactions ? Math.round(stats.accumulatedSales / stats.totalTransactions) : 0)}
+          </span>
+          <span className="kpi-label">평균 주방 설비 객단가</span>
         </div>
       </div>
 
-      {/* Row 2: Charts & Logs */}
+      {/* Row 2: Sales Chart & Donut Chart */}
       <div className="dashboard-content-grid">
-        {/* Grade Distribution Chart (SVG) */}
+        {/* Sales Chart Card */}
         <div className="chart-card-wrapper glass-card">
           <div className="card-header">
-            <h4>고객 등급별 분포</h4>
-            <span className="card-header-badge">누적 기준</span>
+            <div>
+              <h4 className="chart-title">월별 주방 설비 매출 추이</h4>
+              <p className="chart-subtitle">최근 12개월간의 월별 공급 매출 및 거래 건수</p>
+            </div>
+            <div className="card-header-badge color-info">실시간 집계</div>
           </div>
-          
+
+          <div className="bar-chart-container">
+            <div className="bar-chart-bars">
+              {mockSalesHistory.map((item, idx) => {
+                const heightPct = Math.round((item.sales / maxSales) * 100);
+                return (
+                  <div key={idx} className="bar-col">
+                    <div className="bar-wrapper">
+                      <div 
+                        className="bar-fill" 
+                        style={{ height: `${heightPct}%` }}
+                        title={`${item.month}: ${formatWon(item.sales)} (${item.count}건)`}
+                      >
+                        <span className="bar-tooltip">{formatWon(item.sales)}</span>
+                      </div>
+                    </div>
+                    <span className="bar-label">{item.month}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Donut Chart & Legend */}
+        <div className="chart-card-wrapper glass-card">
+          <div className="card-header">
+            <div>
+              <h4 className="chart-title">고객 유형별 분포 (B2B vs B2C)</h4>
+              <p className="chart-subtitle">식당 사장님(업자) 및 일반 소비자 구성비</p>
+            </div>
+          </div>
+
           <div className="donut-chart-container">
             <div className="donut-svg-wrapper">
-              <svg width="200" height="200" viewBox="0 0 200 200" className="donut-chart">
-                <circle cx="100" cy="100" r={r} fill="transparent" stroke="#EBE5DF" strokeWidth="22" />
-                {/* VIP */}
+              <svg width="190" height="190" viewBox="0 0 200 200">
+                <circle cx="100" cy="100" r={r} fill="transparent" stroke="#E2E8F0" strokeWidth="22" />
                 <circle 
-                  cx="100" 
-                  cy="100" 
-                  r={r} 
-                  fill="transparent" 
-                  stroke="#721C24" 
-                  strokeWidth="22" 
-                  strokeDasharray={`${strokeVip} ${c}`}
-                  strokeDashoffset={-offsetVip}
+                  cx="100" cy="100" r={r} fill="transparent" stroke="#0F2C59" strokeWidth="22" 
+                  strokeDasharray={`${strokeVipBiz} ${c}`} strokeDashoffset={-offsetVipBiz}
                   transform="rotate(-90 100 100)"
                 />
-                {/* GOLD */}
                 <circle 
-                  cx="100" 
-                  cy="100" 
-                  r={r} 
-                  fill="transparent" 
-                  stroke="#D9A05B" 
-                  strokeWidth="22" 
-                  strokeDasharray={`${strokeGold} ${c}`}
-                  strokeDashoffset={-offsetGold}
+                  cx="100" cy="100" r={r} fill="transparent" stroke="#2563EB" strokeWidth="22" 
+                  strokeDasharray={`${strokeBiz} ${c}`} strokeDashoffset={-offsetBiz}
                   transform="rotate(-90 100 100)"
                 />
-                {/* SILVER */}
                 <circle 
-                  cx="100" 
-                  cy="100" 
-                  r={r} 
-                  fill="transparent" 
-                  stroke="#5C544E" 
-                  strokeWidth="22" 
-                  strokeDasharray={`${strokeSilver} ${c}`}
-                  strokeDashoffset={-offsetSilver}
+                  cx="100" cy="100" r={r} fill="transparent" stroke="#38BDF8" strokeWidth="22" 
+                  strokeDasharray={`${strokeVipConsumer} ${c}`} strokeDashoffset={-offsetVipConsumer}
                   transform="rotate(-90 100 100)"
                 />
-                {/* BRONZE */}
                 <circle 
-                  cx="100" 
-                  cy="100" 
-                  r={r} 
-                  fill="transparent" 
-                  stroke="#6E8E75" 
-                  strokeWidth="22" 
-                  strokeDasharray={`${strokeBronze} ${c}`}
-                  strokeDashoffset={-offsetBronze}
+                  cx="100" cy="100" r={r} fill="transparent" stroke="#94A3B8" strokeWidth="22" 
+                  strokeDasharray={`${strokeConsumer} ${c}`} strokeDashoffset={-offsetConsumer}
                   transform="rotate(-90 100 100)"
                 />
-                
-                {/* Central Labels */}
-                <text x="100" y="95" textAnchor="middle" className="donut-center-num" fill="var(--color-charcoal)">
+                <text x="100" y="95" textAnchor="middle" className="donut-center-num" fill="#0F172A">
                   {stats.totalCustomers}명
                 </text>
-                <text x="100" y="120" textAnchor="middle" className="donut-center-label" fill="var(--color-gray-dark)">
-                  총 회원수
+                <text x="100" y="120" textAnchor="middle" className="donut-center-label" fill="#64748B">
+                  총 고객수
                 </text>
               </svg>
             </div>
 
             <div className="donut-legend">
               <div className="legend-item">
-                <span className="legend-dot vip"></span>
-                <span className="legend-name">VIP ({VIP}명)</span>
-                <span className="legend-value">{pctVip}%</span>
+                <span className="legend-dot vip-biz"></span>
+                <span className="legend-name">VIP 업자 ({vipBiz}명)</span>
+                <span className="legend-value">{pctVipBiz}%</span>
               </div>
               <div className="legend-item">
-                <span className="legend-dot gold"></span>
-                <span className="legend-name">GOLD ({GOLD}명)</span>
-                <span className="legend-value">{pctGold}%</span>
+                <span className="legend-dot biz"></span>
+                <span className="legend-name">일반 업자 ({biz}명)</span>
+                <span className="legend-value">{pctBiz}%</span>
               </div>
               <div className="legend-item">
-                <span className="legend-dot silver"></span>
-                <span className="legend-name">SILVER ({SILVER}명)</span>
-                <span className="legend-value">{pctSilver}%</span>
+                <span className="legend-dot vip-consumer"></span>
+                <span className="legend-name">VIP 소비자 ({vipConsumer}명)</span>
+                <span className="legend-value">{pctVipConsumer}%</span>
               </div>
               <div className="legend-item">
-                <span className="legend-dot bronze"></span>
-                <span className="legend-name">BRONZE ({BRONZE}명)</span>
-                <span className="legend-value">{pctBronze}%</span>
+                <span className="legend-dot consumer"></span>
+                <span className="legend-name">일반 소비자 ({consumer}명)</span>
+                <span className="legend-value">{pctConsumer}%</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
+      {/* Row 3: Real-time CRM Logs & Recent Tables */}
+      <div className="dashboard-content-grid">
         {/* Real-time CRM Logs */}
         <div className="logs-card-wrapper glass-card">
           <div className="card-header">
             <h4 className="flex items-center gap-2">
-              <Clock size={16} className="text-orange" />
-              <span>실시간 고객 활동 피드</span>
+              <Clock size={18} className="text-navy" />
+              <span>실시간 주방 주문 및 CS 라이브 피드</span>
             </h4>
             <span className="live-indicator">
-              <span className="live-dot animate-pulse"></span>
-              LIVE
+              <span className="live-dot"></span> LIVE
             </span>
           </div>
 
           <div className="logs-list-viewport">
-            {recentLogs.map((log) => (
-              <div className={`log-item-row ${log.highlight ? 'new-highlight' : ''}`} key={log.id}>
-                <div className={`log-badge badge-${log.type}`}>
-                  {log.type}
-                </div>
+            {recentLogs.map(log => (
+              <div key={log.id} className={`log-item-row ${log.highlight ? 'new-highlight' : ''}`}>
+                <span className={`log-badge badge-${log.type}`}>{log.type}</span>
                 <div className="log-body">
                   <div className="log-meta">
                     <span className="log-user">{log.name}</span>
@@ -285,62 +307,28 @@ export default function AdminDashboard() {
             ))}
           </div>
         </div>
-      </div>
 
-      {/* Row 3: New Customer List & Active inquiries */}
-      <div className="dashboard-tables-grid">
-        {/* Latest Clients */}
+        {/* Consultation Inquiries */}
         <div className="table-card-wrapper glass-card">
           <div className="card-header">
-            <h4>최근 등록 고객</h4>
-            <span className="card-header-badge">신규 고객</span>
-          </div>
-          <div className="table-responsive">
-            <table className="admin-dashboard-table">
-              <thead>
-                <tr>
-                  <th>이름</th>
-                  <th>등급</th>
-                  <th>연락처</th>
-                  <th>지역</th>
-                  <th>가입일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {liveCustomers.slice(0, 5).map(cust => (
-                  <tr key={cust.id}>
-                    <td><strong>{cust.name}</strong></td>
-                    <td>
-                      <span className={`badge badge-${cust.grade.toLowerCase()}`}>{cust.grade}</span>
-                    </td>
-                    <td>{cust.phone}</td>
-                    <td>{cust.address}</td>
-                    <td>{cust.regDate}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Active Consultation Inquiries */}
-        <div className="table-card-wrapper glass-card">
-          <div className="card-header">
-            <h4>상담 및 문의 현황</h4>
-            <span className="card-header-badge color-info">{liveInquiries.filter(i => i.status === '대기').length}건 대기중</span>
+            <h4 className="flex items-center gap-2">
+              <FileText size={18} className="text-navy" />
+              <span>3D 도면 & 견적 문의 처리 현황</span>
+            </h4>
+            <span className="card-header-badge color-info">{pendingInquiriesCount}건 처리 대기</span>
           </div>
           <div className="table-responsive">
             <table className="admin-dashboard-table">
               <thead>
                 <tr>
                   <th>업체/고객명</th>
-                  <th>문의 분류</th>
+                  <th>문의 분야</th>
                   <th>접수일</th>
-                  <th>처리 상태</th>
+                  <th>상태</th>
                 </tr>
               </thead>
               <tbody>
-                {liveInquiries.map(inq => (
+                {liveInquiries.slice(0, 5).map(inq => (
                   <tr key={inq.id}>
                     <td><strong>{inq.name}</strong></td>
                     <td>{inq.type}</td>
@@ -358,11 +346,52 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Latest Clients Table */}
+      <div className="table-card-wrapper glass-card">
+        <div className="card-header">
+          <h4 className="flex items-center gap-2">
+            <Users size={18} className="text-navy" />
+            <span>최근 신규 등록 식당 및 주방 고객</span>
+          </h4>
+          <span className="card-header-badge">최신 5건</span>
+        </div>
+        <div className="table-responsive">
+          <table className="admin-dashboard-table">
+            <thead>
+              <tr>
+                <th>이름</th>
+                <th>등급</th>
+                <th>연락처</th>
+                <th>지역/주소</th>
+                <th>등록일</th>
+                <th>누적 거래금액</th>
+              </tr>
+            </thead>
+            <tbody>
+              {liveCustomers.slice(0, 5).map(cust => (
+                <tr key={cust.id}>
+                  <td><strong>{cust.name}</strong></td>
+                  <td>
+                    <span className={`badge badge-${cust.grade?.toLowerCase().replace(/\s+/g, '-')}`}>
+                      {cust.grade}
+                    </span>
+                  </td>
+                  <td>{cust.phone}</td>
+                  <td>{cust.address}</td>
+                  <td>{cust.regDate}</td>
+                  <td><strong>{formatWon(cust.totalAmount)}</strong></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <style>{`
         .dashboard-viewport {
           display: flex;
           flex-direction: column;
-          gap: 30px;
+          gap: 28px;
         }
         
         .dashboard-header-summary {
@@ -370,14 +399,16 @@ export default function AdminDashboard() {
         }
         
         .dashboard-title {
-          font-size: 22px;
-          font-weight: 700;
-          color: var(--color-charcoal);
+          font-size: 24px;
+          font-weight: 800;
+          color: #0F2C59;
+          letter-spacing: -0.5px;
         }
         
         .dashboard-subtitle {
           font-size: 14px;
-          color: var(--color-gray-dark);
+          color: #475569;
+          margin-top: 4px;
         }
         
         /* KPIs Cards */
@@ -389,11 +420,13 @@ export default function AdminDashboard() {
         
         .kpi-card {
           padding: 24px;
-          border: 1px solid var(--color-gray-light);
+          border: 1px solid #E2E8F0;
+          border-radius: 16px;
+          background: #ffffff;
           display: flex;
           flex-direction: column;
           align-items: flex-start;
-          text-align: left;
+          box-shadow: 0 4px 14px rgba(15, 44, 89, 0.05);
         }
         
         .kpi-icon-row {
@@ -405,103 +438,177 @@ export default function AdminDashboard() {
         }
         
         .kpi-icon {
-          width: 40px;
-          height: 40px;
-          border-radius: var(--radius-md);
+          width: 42px;
+          height: 42px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         
-        .bg-orange-light { background-color: var(--color-primary-light); }
-        .bg-green-light { background-color: rgba(110, 142, 117, 0.1); }
-        .bg-blue-light { background-color: rgba(91, 141, 157, 0.1); }
-        .bg-purple-light { background-color: rgba(154, 123, 86, 0.1); }
+        .bg-navy-light { background-color: #EFF6FF; }
+        .bg-blue-light { background-color: #E0F2FE; }
+        .bg-teal-light { background-color: #ECFDF5; }
+        .bg-gold-light { background-color: #FEF3C7; }
         
-        .text-orange { color: var(--color-primary); }
-        .text-green-dark { color: var(--color-success); }
-        .text-blue { color: var(--color-info); }
-        .text-purple { color: var(--color-secondary); }
+        .text-navy { color: #0F2C59; }
+        .text-blue { color: #2563EB; }
+        .text-teal { color: #059669; }
+        .text-gold { color: #D97706; }
         
         .kpi-trend {
           font-size: 12px;
           font-weight: 700;
-          padding: 2px 6px;
-          border-radius: 4px;
+          padding: 3px 8px;
+          border-radius: 6px;
+          background-color: #F1F5F9;
         }
         
-        .text-green {
-          color: var(--color-success);
-          background-color: rgba(110, 142, 117, 0.08);
-        }
+        .kpi-trend.text-blue { color: #2563EB; background-color: #EFF6FF; }
+        .kpi-trend.text-orange { color: #EA580C; background-color: #FFF7ED; }
         
         .kpi-value {
-          font-size: 28px;
+          font-size: 26px;
           font-weight: 900;
-          color: var(--color-charcoal);
+          color: #0F172A;
           line-height: 1.2;
-          margin-bottom: 4px;
-        }
-        
-        .kpi-value-small {
-          font-size: 20px;
-          font-weight: 900;
-          color: var(--color-charcoal);
-          line-height: 1.2;
-          margin-bottom: 8px;
-          white-space: nowrap;
-          word-break: break-all;
+          margin-bottom: 6px;
         }
         
         .kpi-label {
-          font-size: 12px;
-          color: var(--color-gray-dark);
+          font-size: 13px;
+          color: #64748B;
           font-weight: 500;
         }
         
-        /* Row 2 Styles */
+        /* Row 2 Content Grid */
         .dashboard-content-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: 1.2fr 0.8fr;
           gap: 24px;
         }
         
         .chart-card-wrapper, .logs-card-wrapper, .table-card-wrapper {
-          border: 1px solid var(--color-gray-light);
+          background: #ffffff;
+          border: 1px solid #E2E8F0;
+          border-radius: 16px;
           padding: 24px;
           display: flex;
           flex-direction: column;
+          box-shadow: 0 4px 14px rgba(15, 44, 89, 0.04);
         }
         
         .card-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 24px;
-          border-bottom: 1px solid var(--color-gray-light);
-          padding-bottom: 12px;
+          margin-bottom: 20px;
+          border-bottom: 1px solid #F1F5F9;
+          padding-bottom: 14px;
         }
         
-        .card-header h4 {
+        .card-header h4, .chart-title {
           font-size: 16px;
-          font-weight: 700;
-          color: var(--color-charcoal);
+          font-weight: 800;
+          color: #0F2C59;
+          margin: 0;
+        }
+
+        .chart-subtitle {
+          font-size: 12px;
+          color: #64748B;
+          margin-top: 2px;
         }
         
         .card-header-badge {
           font-size: 11px;
           font-weight: 700;
-          background-color: var(--color-gray-ultra);
-          color: var(--color-gray-dark);
-          padding: 2px 8px;
-          border-radius: 4px;
+          background-color: #F1F5F9;
+          color: #475569;
+          padding: 3px 10px;
+          border-radius: 50px;
         }
         
         .card-header-badge.color-info {
-          background-color: rgba(91, 141, 157, 0.1);
-          color: var(--color-info);
+          background-color: #EFF6FF;
+          color: #2563EB;
         }
         
+        /* Bar Chart CSS */
+        .bar-chart-container {
+          height: 220px;
+          display: flex;
+          align-items: flex-end;
+          padding-top: 20px;
+        }
+
+        .bar-chart-bars {
+          display: flex;
+          width: 100%;
+          height: 100%;
+          align-items: flex-end;
+          gap: 8px;
+        }
+
+        .bar-col {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          height: 100%;
+        }
+
+        .bar-wrapper {
+          flex: 1;
+          width: 100%;
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          position: relative;
+        }
+
+        .bar-fill {
+          width: 60%;
+          max-width: 24px;
+          background: linear-gradient(180deg, #2563EB 0%, #0F2C59 100%);
+          border-radius: 4px 4px 0 0;
+          transition: all 0.3s ease;
+          position: relative;
+          cursor: pointer;
+        }
+
+        .bar-fill:hover {
+          background: linear-gradient(180deg, #38BDF8 0%, #2563EB 100%);
+        }
+
+        .bar-tooltip {
+          position: absolute;
+          top: -30px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #0F172A;
+          color: #fff;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 3px 6px;
+          border-radius: 4px;
+          white-space: nowrap;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.2s ease;
+        }
+
+        .bar-fill:hover .bar-tooltip {
+          opacity: 1;
+        }
+
+        .bar-label {
+          font-size: 11px;
+          color: #64748B;
+          margin-top: 8px;
+          font-weight: 600;
+        }
+
         /* Donut Chart SVG styles */
         .donut-chart-container {
           display: flex;
@@ -529,7 +636,7 @@ export default function AdminDashboard() {
         .donut-legend {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 10px;
           text-align: left;
         }
         
@@ -547,19 +654,20 @@ export default function AdminDashboard() {
           flex-shrink: 0;
         }
         
-        .legend-dot.vip { background-color: #721C24; }
-        .legend-dot.gold { background-color: #D9A05B; }
-        .legend-dot.silver { background-color: #5C544E; }
-        .legend-dot.bronze { background-color: #6E8E75; }
+        .legend-dot.vip-biz { background-color: #0F2C59; }
+        .legend-dot.biz { background-color: #2563EB; }
+        .legend-dot.vip-consumer { background-color: #38BDF8; }
+        .legend-dot.consumer { background-color: #94A3B8; }
         
         .legend-name {
-          width: 110px;
-          color: var(--color-gray-dark);
+          width: 115px;
+          color: #475569;
+          font-weight: 500;
         }
         
         .legend-value {
-          font-weight: 700;
-          color: var(--color-charcoal);
+          font-weight: 800;
+          color: #0F172A;
         }
         
         /* Live feed logs */
@@ -567,27 +675,34 @@ export default function AdminDashboard() {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          background-color: #FDF2F0;
-          color: var(--color-danger);
+          background-color: #FEF2F2;
+          color: #EF4444;
           padding: 3px 8px;
-          border-radius: 4px;
+          border-radius: 50px;
           font-size: 11px;
           font-weight: 700;
-          border: 1px solid rgba(201, 111, 83, 0.2);
+          border: 1px solid rgba(239, 68, 68, 0.2);
         }
         
         .live-dot {
           width: 6px;
           height: 6px;
-          background-color: var(--color-danger);
           border-radius: 50%;
+          background-color: #EF4444;
+          animation: pulse 1.5s infinite;
         }
         
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.3; }
+          100% { opacity: 1; }
+        }
+
         .logs-list-viewport {
           display: flex;
           flex-direction: column;
-          gap: 12px;
-          max-height: 240px;
+          gap: 10px;
+          max-height: 250px;
           overflow-y: auto;
           padding-right: 4px;
         }
@@ -595,33 +710,33 @@ export default function AdminDashboard() {
         .log-item-row {
           display: flex;
           gap: 12px;
-          padding: 10px 12px;
-          border-radius: var(--radius-md);
-          background-color: var(--color-gray-ultra);
-          border-left: 3px solid var(--color-gray-medium);
-          transition: all 0.5s ease;
+          padding: 10px 14px;
+          border-radius: 10px;
+          background-color: #F8FAFC;
+          border-left: 3px solid #CBD5E1;
+          transition: all 0.3s ease;
           text-align: left;
         }
         
         .log-item-row.new-highlight {
-          background-color: #FFF9F2;
-          border-left-color: var(--color-primary);
+          background-color: #EFF6FF;
+          border-left-color: #2563EB;
         }
         
         .log-badge {
-          font-size: 10px;
+          font-size: 11px;
           font-weight: 700;
-          padding: 2px 6px;
+          padding: 2px 8px;
           border-radius: 4px;
           height: fit-content;
           flex-shrink: 0;
         }
         
-        .badge-가입 { background-color: var(--color-primary-light); color: var(--color-primary-dark); }
-        .badge-문의 { background-color: rgba(91, 141, 157, 0.1); color: var(--color-info); }
-        .badge-구매 { background-color: rgba(110, 142, 117, 0.1); color: var(--color-success); }
-        .badge-포인트 { background-color: #FFF3CD; color: #856404; }
-        .badge-AS { background-color: #F8D7DA; color: #721C24; }
+        .badge-가입 { background-color: #EFF6FF; color: #0F2C59; }
+        .badge-문의 { background-color: #E0F2FE; color: #0284C7; }
+        .badge-구매 { background-color: #ECFDF5; color: #059669; }
+        .badge-포인트 { background-color: #FEF3C7; color: #D97706; }
+        .badge-AS { background-color: #FEF2F2; color: #DC2626; }
         
         .log-body {
           flex-grow: 1;
@@ -637,27 +752,21 @@ export default function AdminDashboard() {
         
         .log-user {
           font-weight: 700;
-          color: var(--color-charcoal);
+          color: #0F172A;
         }
         
         .log-time {
           font-size: 11px;
-          color: var(--color-gray-medium);
+          color: #94A3B8;
         }
         
         .log-detail {
           font-size: 12px;
-          color: var(--color-gray-dark);
+          color: #475569;
           line-height: 1.4;
         }
         
         /* Tables Grid */
-        .dashboard-tables-grid {
-          display: grid;
-          grid-template-columns: 1.2fr 0.8fr;
-          gap: 24px;
-        }
-        
         .table-responsive {
           width: 100%;
           overflow-x: auto;
@@ -672,47 +781,52 @@ export default function AdminDashboard() {
         .admin-dashboard-table th {
           font-size: 12px;
           font-weight: 700;
-          color: var(--color-gray-dark);
-          border-bottom: 2px solid var(--color-gray-light);
+          color: #475569;
+          border-bottom: 2px solid #E2E8F0;
           padding: 10px 12px;
-          background-color: var(--color-gray-ultra);
+          background-color: #F8FAFC;
         }
         
         .admin-dashboard-table td {
           font-size: 13px;
           padding: 12px;
-          border-bottom: 1px solid var(--color-gray-ultra);
-          color: var(--color-charcoal);
+          border-bottom: 1px solid #F1F5F9;
+          color: #1E293B;
         }
         
         .admin-dashboard-table tr:hover td {
-          background-color: var(--color-gray-ultra);
+          background-color: #F8FAFC;
         }
         
         .status-pill {
           display: inline-flex;
           font-size: 11px;
           font-weight: 700;
-          padding: 2px 8px;
+          padding: 3px 10px;
           border-radius: 50px;
         }
         
         .status-pill.completed {
-          background-color: rgba(110, 142, 117, 0.1);
-          color: var(--color-success);
+          background-color: #ECFDF5;
+          color: #059669;
         }
         
         .status-pill.pending {
-          background-color: #FFF3CD;
-          color: #856404;
+          background-color: #FEF3C7;
+          color: #D97706;
         }
+
+        .badge-vip-업자 { background-color: #0F2C59; color: #fff; }
+        .badge-일반-업자 { background-color: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+        .badge-vip-소비자 { background-color: #E0F2FE; color: #0284C7; }
+        .badge-일반-소비자 { background-color: #F1F5F9; color: #64748B; }
         
         @media (max-width: 991px) {
           .kpi-grid {
             grid-template-columns: repeat(2, 1fr);
           }
           
-          .dashboard-content-grid, .dashboard-tables-grid {
+          .dashboard-content-grid {
             grid-template-columns: 1fr;
           }
         }

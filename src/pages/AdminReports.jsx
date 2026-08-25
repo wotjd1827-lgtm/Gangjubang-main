@@ -1,86 +1,109 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { BarChart3, TrendingUp, Compass, Award, CreditCard } from 'lucide-react';
+import { TrendingUp, Award, Target } from 'lucide-react';
 import { mockSalesHistory } from '../data/mockData';
 
 export default function AdminReports() {
   const { customers } = useOutletContext();
 
-  // 1. Calculate Grade Total Purchase Amounts
-  const gradeTotals = customers.reduce((acc, c) => {
-    acc[c.grade] = (acc[c.grade] || 0) + c.totalAmount;
-    return acc;
-  }, { VIP: 0, GOLD: 0, SILVER: 0, BRONZE: 0 });
+  // 1. Calculate Grade Total Purchase Amounts (B2B vs B2C Segments)
+  const gradeTotals = useMemo(() => {
+    return customers.reduce((acc, c) => {
+      const g = c.grade || '일반 소비자';
+      acc[g] = (acc[g] || 0) + (c.totalAmount || 0);
+      return acc;
+    }, { 'VIP 업자': 0, '일반 업자': 0, 'VIP 소비자': 0, '일반 소비자': 0 });
+  }, [customers]);
 
-  const totalRevenue = Object.values(gradeTotals).reduce((sum, v) => sum + v, 0);
+  const totalRevenue = useMemo(() => {
+    return Object.values(gradeTotals).reduce((sum, v) => sum + v, 0);
+  }, [gradeTotals]);
 
-  // Formatting helper
+  // Formatting helpers
   const formatWon = (value) => {
-    return new Intl.NumberFormat('ko-KR').format(value) + '원';
+    return new Intl.NumberFormat('ko-KR').format(value || 0) + '원';
   };
   const formatWonMillion = (value) => {
-    return (value / 100000000).toFixed(2) + '억원';
+    return ((value || 0) / 100000000).toFixed(2) + '억원';
   };
 
   // 2. Bar Chart Math (Grade Revenues)
-  const maxGradeRevenue = Math.max(...Object.values(gradeTotals));
+  const maxGradeRevenue = useMemo(() => {
+    const vals = Object.values(gradeTotals);
+    return Math.max(...vals, 1);
+  }, [gradeTotals]);
+
   const gradeColors = {
-    VIP: '#721C24',
-    GOLD: '#D9A05B',
-    SILVER: '#5C544E',
-    BRONZE: '#6E8E75'
+    'VIP 업자': '#0F2C59',
+    '일반 업자': '#2563EB',
+    'VIP 소비자': '#38BDF8',
+    '일반 소비자': '#94A3B8'
   };
 
   // 3. Line Chart Math (Monthly Revenue)
-  const maxSales = Math.max(...mockSalesHistory.map(h => h.sales));
-  const minSales = Math.min(...mockSalesHistory.map(h => h.sales));
+  const maxSales = useMemo(() => Math.max(...mockSalesHistory.map(h => h.sales)), []);
   
   // Grid lines
   const gridLinesCount = 5;
   const gridInterval = maxSales / gridLinesCount;
 
-  // Render SVG points (Width: 600, Height: 240)
   const chartW = 600;
   const chartH = 200;
   const paddingX = 40;
   const paddingY = 20;
 
-  const points = mockSalesHistory.map((item, index) => {
-    const x = paddingX + (index * (chartW - 2 * paddingX) / (mockSalesHistory.length - 1));
-    // Invert Y because SVG 0,0 is top-left
-    const y = chartH - paddingY - (item.sales / maxSales) * (chartH - 2 * paddingY);
-    return { x, y, ...item };
-  });
+  const points = useMemo(() => {
+    return mockSalesHistory.map((item, index) => {
+      const x = paddingX + (index * (chartW - 2 * paddingX) / (mockSalesHistory.length - 1));
+      const y = chartH - paddingY - (item.sales / maxSales) * (chartH - 2 * paddingY);
+      return { x, y, ...item };
+    });
+  }, [maxSales]);
 
-  const linePath = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-  const areaPath = `${linePath} L ${points[points.length - 1].x} ${chartH - paddingY} L ${points[0].x} ${chartH - paddingY} Z`;
+  const linePath = useMemo(() => {
+    return points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  }, [points]);
+
+  const areaPath = useMemo(() => {
+    if (!points.length) return '';
+    return `${linePath} L ${points[points.length - 1].x} ${chartH - paddingY} L ${points[0].x} ${chartH - paddingY} Z`;
+  }, [linePath, points]);
 
   // Sort top customers by amount spent
-  const topSpentCustomers = [...customers]
-    .sort((a, b) => b.totalAmount - a.totalAmount)
-    .slice(0, 3);
+  const topSpentCustomers = useMemo(() => {
+    return [...customers]
+      .sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0))
+      .slice(0, 3);
+  }, [customers]);
+
+  const targetRevenue = 1000000000; // 10억
+  const achievementRate = useMemo(() => {
+    return ((totalRevenue / targetRevenue) * 100).toFixed(1);
+  }, [totalRevenue]);
 
   return (
     <div className="reports-viewport animate-fade-in">
       <div className="reports-header">
-        <h3 className="reports-title">통계 / 리포트</h3>
-        <p className="reports-subtitle">강주방 CRM 거래 통계와 등급별 매출 기여도 분석 리포트입니다.</p>
+        <h3 className="reports-title">강주방 통계 및 기여도 리포트</h3>
+        <p className="reports-subtitle">주방기기 거래 매출 실적 추이와 B2B/B2C 등급별 기여도 정밀 분석입니다.</p>
       </div>
 
-      {/* KPI summaries */}
+      {/* KPI summary */}
       <div className="reports-summary-cards">
         <div className="rep-kpi-card glass-card">
           <div className="rep-kpi-row">
-            <TrendingUp size={24} className="text-orange" />
+            <div className="icon-wrapper">
+              <TrendingUp size={24} className="text-navy" />
+            </div>
             <div>
-              <span className="rep-label">올해 총 매출 목표 달성률</span>
+              <span className="rep-label">올해 주방기기 총 공급 매출 목표 달성률</span>
               <h4>{formatWonMillion(totalRevenue)} 달성 <span>(목표 10억원 대비)</span></h4>
             </div>
           </div>
           <div className="rep-progress-bar">
-            <div className="rep-progress" style={{ width: `${(totalRevenue / 1000000000) * 100}%` }}></div>
+            <div className="rep-progress" style={{ width: `${Math.min(achievementRate, 100)}%` }}></div>
           </div>
-          <span className="rep-bottom-info">누적 {((totalRevenue / 1000000000) * 100).toFixed(1)}% 달성 중</span>
+          <span className="rep-bottom-info">누적 {achievementRate}% 달성 중</span>
         </div>
       </div>
 
@@ -89,7 +112,7 @@ export default function AdminReports() {
         {/* Monthly Revenue Trend Line Chart */}
         <div className="chart-card-wrapper glass-card line-chart-card">
           <div className="card-header">
-            <h4>월별 매출액 추이</h4>
+            <h4>월별 주방기기 매출액 추이</h4>
             <span className="card-header-badge color-success">최근 12개월</span>
           </div>
 
@@ -101,8 +124,8 @@ export default function AdminReports() {
                 const value = Math.round(maxSales - (idx * gridInterval));
                 return (
                   <g key={idx}>
-                    <line x1={paddingX} y1={y} x2={chartW - paddingX} y2={y} stroke="var(--color-gray-light)" strokeWidth="1" strokeDasharray="4 4" />
-                    <text x={paddingX - 10} y={y + 4} textAnchor="end" className="chart-grid-label" fill="var(--color-gray-medium)">
+                    <line x1={paddingX} y1={y} x2={chartW - paddingX} y2={y} stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 4" />
+                    <text x={paddingX - 10} y={y + 4} textAnchor="end" className="chart-grid-label" fill="#64748B">
                       {Math.round(value / 10000000)}천만
                     </text>
                   </g>
@@ -110,22 +133,20 @@ export default function AdminReports() {
               })}
 
               {/* Area path */}
-              <path d={areaPath} fill="rgba(192, 130, 97, 0.08)" />
+              <path d={areaPath} fill="rgba(37, 99, 235, 0.08)" />
 
               {/* Line path */}
-              <path d={linePath} fill="transparent" stroke="var(--color-primary)" strokeWidth="3" />
+              <path d={linePath} fill="transparent" stroke="#2563EB" strokeWidth="3" />
 
               {/* Data points */}
               {points.map((p, idx) => (
                 <g key={idx} className="chart-point-group">
-                  <circle cx={p.x} cy={p.y} r="5" fill="#ffffff" stroke="var(--color-primary)" strokeWidth="2" />
-                  <circle cx={p.x} cy={p.y} r="8" fill="var(--color-primary)" className="point-hover-effect" />
-                  {/* Tooltip text (shown conditionally on hover in CSS) */}
+                  <circle cx={p.x} cy={p.y} r="5" fill="#ffffff" stroke="#2563EB" strokeWidth="2" />
+                  <circle cx={p.x} cy={p.y} r="8" fill="#2563EB" className="point-hover-effect" />
                   <text x={p.x} y={p.y - 12} textAnchor="middle" className="chart-point-val">
                     {(p.sales / 10000000).toFixed(0)}천
                   </text>
-                  {/* X Axis Labels */}
-                  <text x={p.x} y={chartH - 4} textAnchor="middle" className="chart-axis-label" fill="var(--color-gray-dark)">
+                  <text x={p.x} y={chartH - 4} textAnchor="middle" className="chart-axis-label" fill="#64748B">
                     {p.month}
                   </text>
                 </g>
@@ -143,21 +164,21 @@ export default function AdminReports() {
 
           <div className="svg-bar-chart-container">
             {Object.entries(gradeTotals).map(([grade, val]) => {
-              const percentage = ((val / totalRevenue) * 100).toFixed(1);
+              const percentage = totalRevenue > 0 ? ((val / totalRevenue) * 100).toFixed(1) : '0.0';
               const barHeightPct = (val / maxGradeRevenue) * 100;
               return (
                 <div className="bar-chart-column" key={grade}>
                   <span className="bar-val-label">{formatWon(Math.round(val / 10000))}만</span>
                   <div className="bar-track">
                     <div 
-                      className="bar-fill" 
+                      className="bar-fill-seg" 
                       style={{ 
                         height: `${barHeightPct}%`,
-                        backgroundColor: gradeColors[grade]
+                        backgroundColor: gradeColors[grade] || '#2563EB'
                       }}
                     ></div>
                   </div>
-                  <span className={`badge badge-${grade.toLowerCase()} bar-grade-badge`}>{grade}</span>
+                  <span className="bar-grade-badge">{grade}</span>
                   <span className="bar-pct-label">{percentage}%</span>
                 </div>
               );
@@ -166,14 +187,14 @@ export default function AdminReports() {
         </div>
       </div>
 
-      {/* Lower Row: TOP VIP list & Text analyses */}
+      {/* Lower Row: TOP VIP list & Business Advice */}
       <div className="reports-tables-grid">
         {/* Top VIP Spenders */}
         <div className="table-card-wrapper glass-card">
           <div className="card-header">
             <h4 className="flex items-center gap-2">
-              <Award size={16} className="text-orange" />
-              <span>우수 구매 고객 TOP 3 (VIP)</span>
+              <Award size={18} className="text-gold" />
+              <span>우수 구매 고객 TOP 3 (VIP 점주)</span>
             </h4>
           </div>
           <div className="table-responsive">
@@ -192,11 +213,13 @@ export default function AdminReports() {
                 {topSpentCustomers.map((cust, idx) => (
                   <tr key={cust.id}>
                     <td><strong>{idx + 1}위</strong></td>
-                    <td>{cust.name}</td>
-                    <td><span className="badge badge-vip">{cust.grade}</span></td>
+                    <td><strong>{cust.name}</strong></td>
+                    <td>
+                      <span className="status-pill completed">{cust.grade}</span>
+                    </td>
                     <td>{cust.frequency}회</td>
-                    <td className="text-right font-bold text-orange">{formatWon(cust.totalAmount)}</td>
-                    <td className="text-right color-primary">{formatWon(cust.points)}</td>
+                    <td className="text-right font-bold text-navy">{formatWon(cust.totalAmount)}</td>
+                    <td className="text-right text-blue">{formatWon(cust.points)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -207,21 +230,24 @@ export default function AdminReports() {
         {/* Business Advice/Notes */}
         <div className="table-card-wrapper glass-card notes-card">
           <div className="card-header">
-            <h4>강주방 CRM 비즈니스 분석 제언</h4>
+            <h4 className="flex items-center gap-2">
+              <Target size={18} className="text-navy" />
+              <span>강주방 CRM 비즈니스 운영 제언</span>
+            </h4>
           </div>
           <div className="reports-notes-content">
             <div className="advice-block">
-              <h5>1. VIP 고객 기여도 극대화</h5>
+              <h5>1. VIP 가맹점주 기여도 극대화</h5>
               <p>
-                현재 전체 매출의 높은 비중을 <strong>VIP 등급</strong> 고객이 차지하고 있습니다. 
-                매출 신장을 위해 VIP 등급 가맹점주를 위한 3D 컨설팅 무상 우선 매칭 및 A/S 긴급 출동 보장 서비스를 확대 제공해야 합니다.
+                전체 매출의 약 <strong>60% 이상</strong>을 B2B VIP 등급 가맹점주가 차지하고 있습니다. 
+                3D 도면 무상 매칭 및 A/S 긴급 출동 보장 혜택을 지속적으로 지원하는 것이 핵심입니다.
               </p>
             </div>
             <div className="advice-block">
               <h5>2. 비수기(7-8월) 마케팅 전략</h5>
               <p>
-                통상 7~8월 휴가철 창업 연기로 매출 정체가 확인되었습니다. 
-                이 시기에 네이버 카페 <strong>'아프니까 사장이다'</strong> 특별 가입 프로모션(포인트 2배 적립 및 무료 설치)을 집중 배치하여 사전 예약 가맹을 유도하는 것이 효과적입니다.
+                여름 휴가철 창업 연기로 발생할 수 있는 비수기 매출 정체를 방지하기 위해 
+                네이버 카페 <strong>'아프니까 사장이다'</strong> 연계 프로모션을 집중 배치하는 것을 추천합니다.
               </p>
             </div>
           </div>
@@ -232,7 +258,7 @@ export default function AdminReports() {
         .reports-viewport {
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 28px;
         }
         
         .reports-header {
@@ -240,24 +266,28 @@ export default function AdminReports() {
         }
         
         .reports-title {
-          font-size: 22px;
-          font-weight: 700;
+          font-size: 24px;
+          font-weight: 800;
+          color: #0F2C59;
         }
         
         .reports-subtitle {
           font-size: 14px;
-          color: var(--color-gray-dark);
+          color: #475569;
+          margin-top: 4px;
         }
         
-        /* KPI summaries */
         .reports-summary-cards {
           width: 100%;
         }
         
         .rep-kpi-card {
           padding: 24px;
-          border: 1px solid var(--color-gray-light);
+          background: #ffffff;
+          border: 1px solid #E2E8F0;
+          border-radius: 16px;
           text-align: left;
+          box-shadow: 0 4px 14px rgba(15, 44, 89, 0.04);
         }
         
         .rep-kpi-row {
@@ -267,186 +297,162 @@ export default function AdminReports() {
           margin-bottom: 16px;
         }
         
-        .rep-kpi-row svg {
-          padding: 10px;
-          box-sizing: content-box;
-          background-color: var(--color-primary-light);
-          border-radius: 50%;
+        .icon-wrapper {
+          width: 48px;
+          height: 48px;
+          background-color: #EFF6FF;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
+
+        .text-navy { color: #0F2C59; }
+        .text-blue { color: #2563EB; }
+        .text-gold { color: #D97706; }
         
         .rep-label {
-          font-size: 12px;
-          color: var(--color-gray-dark);
+          font-size: 13px;
+          color: #64748B;
           font-weight: 500;
         }
         
         .rep-kpi-row h4 {
-          font-size: 24px;
-          font-weight: 900;
+          font-size: 22px;
+          font-weight: 800;
+          color: #0F172A;
+          margin-top: 2px;
         }
         
         .rep-kpi-row h4 span {
           font-size: 13px;
-          color: var(--color-gray-medium);
-          font-weight: 500;
+          color: #94A3B8;
+          font-weight: 400;
         }
         
         .rep-progress-bar {
-          height: 8px;
+          height: 10px;
           width: 100%;
-          background-color: var(--color-gray-light);
+          background-color: #F1F5F9;
           border-radius: 50px;
           overflow: hidden;
           margin-bottom: 8px;
         }
-        
+
         .rep-progress {
           height: 100%;
-          background-color: var(--color-primary);
+          background: linear-gradient(90deg, #0F2C59 0%, #2563EB 100%);
           border-radius: 50px;
-          transition: width 1s ease-out;
+          transition: width 0.5s ease;
         }
-        
+
         .rep-bottom-info {
           font-size: 12px;
+          color: #2563EB;
           font-weight: 700;
-          color: var(--color-primary);
         }
-        
-        /* Charts Grid */
+
         .reports-charts-grid {
           display: grid;
           grid-template-columns: 1.2fr 0.8fr;
           gap: 24px;
         }
-        
-        .line-chart-card, .bar-chart-card {
-          border: 1px solid var(--color-gray-light);
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
-        }
-        
+
         .svg-line-chart-container {
-          height: 240px;
+          height: 230px;
+          width: 100%;
           padding-top: 10px;
         }
-        
-        .line-chart-svg {
-          width: 100%;
-          height: 100%;
-          overflow: visible;
-        }
-        
-        .chart-grid-label {
-          font-size: 9px;
-        }
-        
-        .chart-axis-label {
-          font-size: 10px;
-          font-weight: 500;
-        }
-        
-        .chart-point-val {
-          font-size: 9px;
-          font-weight: 700;
-          fill: var(--color-primary-dark);
-          opacity: 0;
-          transition: opacity var(--transition-fast);
-        }
-        
-        .chart-point-group:hover .chart-point-val {
-          opacity: 1;
-        }
-        
-        .point-hover-effect {
-          opacity: 0;
-          cursor: pointer;
-        }
-        
-        .chart-point-group:hover .point-hover-effect {
-          opacity: 0.25;
-        }
-        
-        /* Bar Chart columns styling */
+
         .svg-bar-chart-container {
           display: flex;
-          height: 240px;
-          justify-content: space-around;
+          height: 230px;
           align-items: flex-end;
-          padding-bottom: 20px;
-          padding-top: 10px;
+          justify-content: space-around;
+          padding-top: 20px;
         }
-        
+
         .bar-chart-column {
           display: flex;
           flex-direction: column;
           align-items: center;
-          width: 60px;
           height: 100%;
+          width: 60px;
         }
-        
+
         .bar-val-label {
           font-size: 11px;
           font-weight: 700;
-          color: var(--color-charcoal);
+          color: #0F172A;
           margin-bottom: 6px;
         }
-        
+
         .bar-track {
+          flex: 1;
           width: 24px;
-          background-color: var(--color-gray-light);
-          border-radius: 50px;
-          flex-grow: 1;
+          background-color: #F1F5F9;
+          border-radius: 6px 6px 0 0;
           display: flex;
           align-items: flex-end;
           overflow: hidden;
-          margin-bottom: 10px;
         }
-        
-        .bar-fill {
+
+        .bar-fill-seg {
           width: 100%;
-          border-radius: 50px;
-          transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+          border-radius: 6px 6px 0 0;
+          transition: height 0.4s ease;
         }
-        
+
         .bar-grade-badge {
-          margin-bottom: 4px;
-        }
-        
-        .bar-pct-label {
           font-size: 11px;
           font-weight: 700;
-          color: var(--color-gray-dark);
+          margin-top: 8px;
+          color: #475569;
+          white-space: nowrap;
         }
-        
-        /* Lower rows */
+
+        .bar-pct-label {
+          font-size: 11px;
+          color: #2563EB;
+          font-weight: 800;
+        }
+
         .reports-tables-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: 1.2fr 0.8fr;
           gap: 24px;
         }
-        
+
         .reports-notes-content {
-          text-align: left;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 16px;
+          text-align: left;
         }
-        
+
+        .advice-block {
+          background-color: #F8FAFC;
+          padding: 16px;
+          border-radius: 12px;
+          border-left: 4px solid #0F2C59;
+        }
+
         .advice-block h5 {
           font-size: 14px;
           font-weight: 700;
-          color: var(--color-charcoal);
+          color: #0F2C59;
           margin-bottom: 6px;
         }
-        
+
         .advice-block p {
           font-size: 13px;
-          color: var(--color-gray-dark);
-          line-height: 1.5;
+          color: #475569;
+          line-height: 1.6;
         }
-        
+
+        .font-bold { font-weight: 700; }
+        .text-right { text-align: right; }
+
         @media (max-width: 991px) {
           .reports-charts-grid, .reports-tables-grid {
             grid-template-columns: 1fr;

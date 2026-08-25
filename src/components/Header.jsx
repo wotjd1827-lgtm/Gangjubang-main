@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { User, Menu, X } from 'lucide-react';
+import { User, Menu, X, LogOut, ShieldCheck } from 'lucide-react';
 
 const BASE = '/';
 
-export default function Header({ onOpenLogin }) {
+export default function Header({ onOpenLogin, currentUser, onLogout }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -31,6 +31,8 @@ export default function Header({ onOpenLogin }) {
     }
   };
 
+  const displayName = currentUser?.user_metadata?.name || currentUser?.email?.split('@')[0] || '회원';
+
   return (
     <header className={`site-header ${isScrolled ? 'scrolled' : ''}`}>
       <Link to="/" className="header-logo">
@@ -52,13 +54,32 @@ export default function Header({ onOpenLogin }) {
       </nav>
 
       <div className="header-right">
-        <button onClick={() => onOpenLogin('login')} className="header-auth-btn">
-          <User size={16} />
-          <span>로그인</span>
-        </button>
-        <button onClick={() => onOpenLogin('signup')} className="header-auth-btn signup">
-          <span>회원가입</span>
-        </button>
+        {currentUser ? (
+          <>
+            <div className="user-profile-badge">
+              <User size={14} />
+              <span><strong>{displayName}</strong>님</span>
+            </div>
+            <Link to="/admin" className="header-auth-btn admin-link" style={{ textDecoration: 'none' }}>
+              <ShieldCheck size={14} />
+              <span>관리자 CRM</span>
+            </Link>
+            <button onClick={onLogout} className="header-auth-btn logout">
+              <LogOut size={14} />
+              <span>로그아웃</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button onClick={() => onOpenLogin('login')} className="header-auth-btn">
+              <User size={16} />
+              <span>로그인</span>
+            </button>
+            <Link to="/signup" className="header-auth-btn signup" style={{ textDecoration: 'none' }}>
+              <span>회원가입</span>
+            </Link>
+          </>
+        )}
       </div>
 
       {/* Mobile Toggle */}
@@ -77,8 +98,24 @@ export default function Header({ onOpenLogin }) {
             <a href="#consulting" onClick={(e) => handleNavClick(e, 'consulting')}>문의하기</a>
           </nav>
           <div className="mobile-auth">
-            <button onClick={() => { setIsMobileMenuOpen(false); onOpenLogin('login'); }} className="btn btn-secondary w-full">로그인</button>
-            <button onClick={() => { setIsMobileMenuOpen(false); onOpenLogin('signup'); }} className="btn btn-primary w-full">회원가입</button>
+            {currentUser ? (
+              <>
+                <div className="text-center font-bold mb-2">
+                  <span>{displayName}님 로그인됨</span>
+                </div>
+                <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="btn btn-secondary w-full text-center" style={{ textDecoration: 'none' }}>
+                  관리자 CRM 바로가기
+                </Link>
+                <button onClick={() => { setIsMobileMenuOpen(false); onLogout(); }} className="btn btn-primary w-full">
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={() => { setIsMobileMenuOpen(false); onOpenLogin('login'); }} className="btn btn-secondary w-full">로그인</button>
+                <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)} className="btn btn-primary w-full text-center" style={{ textDecoration: 'none' }}>회원가입</Link>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -120,12 +157,13 @@ export default function Header({ onOpenLogin }) {
           height: auto;
           object-fit: contain;
           transition: all 0.3s ease;
-          /* On transparent header over dark hero, we brighten the logo */
-          filter: brightness(0) invert(1);
+          /* On transparent header over dark hero: crisp white with subtle blue glow */
+          filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(37, 99, 235, 0.4));
         }
 
         .site-header.scrolled .logo-img {
-          filter: none;
+          /* On scrolled header: Deep Navy Blue (#0F2C59) */
+          filter: brightness(0) saturate(100%) invert(11%) sepia(94%) saturate(3695%) hue-rotate(213deg) brightness(92%) contrast(98%);
           width: 110px;
         }
 
@@ -210,6 +248,40 @@ export default function Header({ onOpenLogin }) {
         .header-auth-btn.signup {
           background: rgba(255, 255, 255, 0.15);
           border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .user-profile-badge {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.95);
+          background: rgba(255, 255, 255, 0.12);
+          padding: 6px 14px;
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .site-header.scrolled .user-profile-badge {
+          color: var(--color-charcoal);
+          background: var(--color-primary-light);
+          border-color: var(--color-primary);
+        }
+
+        .header-auth-btn.admin-link {
+          background: var(--color-primary);
+          color: #fff;
+          border-color: var(--color-primary);
+        }
+
+        .header-auth-btn.logout {
+          color: #fca5a5;
+          border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .site-header.scrolled .header-auth-btn.logout {
+          color: #dc2626;
+          border-color: rgba(220, 38, 38, 0.3);
         }
 
         .site-header.scrolled .header-auth-btn {

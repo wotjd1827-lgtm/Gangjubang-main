@@ -108,8 +108,8 @@ export default function AdminLayout({ customers, setCustomers, inquiries, setInq
         /* Sidebar Styles */
         .admin-sidebar {
           width: 260px;
-          background-color: var(--color-charcoal);
-          color: var(--color-gray-light);
+          background-color: #071325;
+          color: #94A3B8;
           display: flex;
           flex-direction: column;
           position: fixed;
@@ -118,7 +118,7 @@ export default function AdminLayout({ customers, setCustomers, inquiries, setInq
           left: 0;
           z-index: 1001;
           transition: transform var(--transition-normal);
-          border-right: 1px solid var(--color-gray-dark);
+          border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         .admin-sidebar.closed {
@@ -130,7 +130,7 @@ export default function AdminLayout({ customers, setCustomers, inquiries, setInq
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         .sidebar-logo {
@@ -140,16 +140,14 @@ export default function AdminLayout({ customers, setCustomers, inquiries, setInq
         }
         
         .sidebar-logo-img {
-          height: 40px;
+          height: 38px;
           object-fit: contain;
-          background-color: #FAF7F2;
-          padding: 4px 14px;
-          border-radius: var(--radius-md);
+          filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(37, 99, 235, 0.5));
         }
         
         .sidebar-close-btn {
           display: none;
-          color: var(--color-gray-medium);
+          color: #94A3B8;
         }
         
         .sidebar-nav {
@@ -167,20 +165,21 @@ export default function AdminLayout({ customers, setCustomers, inquiries, setInq
           padding: 12px 16px;
           border-radius: var(--radius-md);
           font-size: 14px;
-          color: var(--color-gray-medium);
+          color: #94A3B8;
           transition: all var(--transition-fast);
+          text-decoration: none;
         }
         
         .sidebar-link:hover {
           color: white;
-          background-color: rgba(255, 255, 255, 0.05);
+          background-color: rgba(255, 255, 255, 0.06);
         }
         
         .sidebar-link.active {
           color: white;
-          background-color: var(--color-primary);
+          background: linear-gradient(135deg, #0F2C59 0%, #2563EB 100%);
           font-weight: 700;
-          box-shadow: var(--shadow-sm);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
         
         .sidebar-footer {

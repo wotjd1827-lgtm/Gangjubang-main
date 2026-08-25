@@ -3,10 +3,11 @@ import {
   Award, Users, PenTool, MessageSquare, Settings, 
   ShieldCheck, Phone, Send, CheckCircle
 } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 const BASE = '/';
 
-export default function Homepage({ onOpenLogin }) {
+export default function Homepage({ _onOpenLogin }) {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -21,17 +22,33 @@ export default function Homepage({ onOpenLogin }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.phone) {
       alert('이름과 연락처는 필수 입력 항목입니다.');
       return;
     }
-    setIsSubmitted(true);
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setFormData({ name: '', phone: '', businessType: '', consultType: '3D 도면 컨설팅', message: '' });
-    }, 4000);
+    
+    try {
+      await supabase.from('inquiries').insert([
+        {
+          name: formData.name,
+          phone: formData.phone,
+          business_type: formData.businessType,
+          consult_type: formData.consultType,
+          message: formData.message,
+          status: '대기'
+        }
+      ]);
+    } catch (err) {
+      console.log('Supabase inquiry insert fallback active:', err);
+    } finally {
+      setIsSubmitted(true);
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setFormData({ name: '', phone: '', businessType: '', consultType: '3D 도면 컨설팅', message: '' });
+      }, 4000);
+    }
   };
 
   const portfolioImages = [
@@ -136,17 +153,6 @@ export default function Homepage({ onOpenLogin }) {
               <div className="feature-list">
                 <div className="feat"><ShieldCheck size={20} /><div><h5>완벽한 품질 보증</h5><p>정품 제조 공장 다이렉트 매입</p></div></div>
                 <div className="feat"><Settings size={20} /><div><h5>원스톱 설비 및 AS</h5><p>전국 통합 서비스망 구축</p></div></div>
-              </div>
-            </div>
-            <div className="company-right">
-              <div className="info-table">
-                <h4>기업 정보 개요</h4>
-                <div className="row"><span>기업명</span><span>경상코리아 (강주방)</span></div>
-                <div className="row"><span>대표이사</span><span>김재성</span></div>
-                <div className="row"><span>사업자번호</span><span>367-86-03414</span></div>
-                <div className="row"><span>대표연락처</span><span>1533-1524 / 010-3332-9155</span></div>
-                <div className="row"><span>사업 내용</span><span>업소용 주방제품 제조, 도소매, 수출</span></div>
-                <div className="row"><span>공식 홈페이지</span><span><a href="https://smartstore.naver.com/kangjubang" target="_blank" rel="noopener noreferrer">네이버 스마트스토어</a></span></div>
               </div>
             </div>
           </div>
@@ -312,7 +318,7 @@ export default function Homepage({ onOpenLogin }) {
         }
         .hero-overlay {
           position: absolute; inset: 0;
-          background: rgba(0, 0, 0, 0.55);
+          background: linear-gradient(180deg, rgba(15, 23, 42, 0.40) 0%, rgba(15, 44, 89, 0.25) 50%, rgba(7, 19, 37, 0.65) 100%);
           z-index: 1;
         }
         .hero-content {
@@ -323,9 +329,10 @@ export default function Homepage({ onOpenLogin }) {
           padding: 0 24px;
         }
         .hero-eng {
-          font-size: 14px; font-weight: 400;
+          font-size: 14px; font-weight: 700;
           letter-spacing: 5px;
-          color: rgba(255,255,255,0.6);
+          color: #60A5FA;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
           animation: fadeIn 0.8s ease forwards;
         }
         .hero-center {
@@ -336,12 +343,13 @@ export default function Homepage({ onOpenLogin }) {
         }
         .hero-logo {
           width: 220px; height: auto;
-          filter: brightness(0) invert(1);
+          filter: brightness(0) invert(1) drop-shadow(0 4px 16px rgba(0, 0, 0, 0.8));
         }
         .hero-tagline {
-          font-size: 19px; font-weight: 300;
+          font-size: 19px; font-weight: 400;
           line-height: 1.8;
-          color: rgba(255,255,255,0.8);
+          color: #FFFFFF;
+          text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
         }
         .hero-scroll {
           position: absolute; bottom: 40px;
@@ -353,11 +361,11 @@ export default function Homepage({ onOpenLogin }) {
         }
         .hero-scroll span {
           font-size: 10px; letter-spacing: 3px;
-          color: rgba(255,255,255,0.45);
+          color: #60A5FA;
         }
         .scroll-bar {
-          width: 1px; height: 40px;
-          background: linear-gradient(to bottom, rgba(255,255,255,0.5), transparent);
+          width: 2px; height: 40px;
+          background: linear-gradient(to bottom, #38BDF8, transparent);
           animation: scrollPulse 2s ease-in-out infinite;
         }
         @keyframes scrollPulse {
@@ -367,7 +375,8 @@ export default function Homepage({ onOpenLogin }) {
 
         /* ── STATS BAR ── */
         .stats-bar {
-          background: var(--color-charcoal);
+          background: #0B192C;
+          border-y: 1px solid rgba(37, 99, 235, 0.2);
           padding: 48px 0;
         }
         .stats-row {
@@ -382,22 +391,22 @@ export default function Homepage({ onOpenLogin }) {
         .stat-item strong {
           display: block;
           font-size: 42px; font-weight: 900;
-          color: var(--color-primary);
+          color: #60A5FA;
           line-height: 1;
         }
         .stat-item strong span {
           font-size: 16px; font-weight: 600;
-          color: rgba(255,255,255,0.6);
+          color: rgba(255,255,255,0.7);
           margin-left: 2px;
         }
         .stat-item p {
           font-size: 13px;
-          color: rgba(255,255,255,0.5);
+          color: rgba(255,255,255,0.6);
           margin-top: 8px;
         }
         .stat-divider {
           width: 1px; height: 50px;
-          background: rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.12);
           flex-shrink: 0;
         }
 
@@ -448,7 +457,7 @@ export default function Homepage({ onOpenLogin }) {
           align-items: center;
           justify-content: center;
           text-align: center;
-          background: var(--color-charcoal);
+          background: linear-gradient(135deg, #0F2C59 0%, #1E3E62 100%);
           color: #fff;
           padding: 30px;
         }
@@ -470,10 +479,8 @@ export default function Homepage({ onOpenLogin }) {
           background: #fff;
         }
         .company-card {
-          display: grid;
-          grid-template-columns: 1.1fr 0.9fr;
-          gap: 60px;
-          align-items: flex-start;
+          max-width: 860px;
+          margin: 0 auto;
         }
         .company-left .tag {
           display: inline-block;
@@ -505,7 +512,7 @@ export default function Homepage({ onOpenLogin }) {
           margin-bottom: 30px;
         }
         .feature-list {
-          display: flex; flex-direction: column; gap: 16px;
+          display: flex; flex-wrap: wrap; gap: 24px 48px;
         }
         .feat {
           display: flex; gap: 14px; align-items: flex-start;
@@ -703,17 +710,17 @@ export default function Homepage({ onOpenLogin }) {
         /* ── PORTFOLIO ── */
         .section-portfolio {
           padding: 100px 0;
-          background: var(--color-charcoal);
+          background: #071325;
         }
         .section-head.light h2 {
           color: #fff;
         }
         .tag.light {
-          background: rgba(192,130,97,0.2);
-          color: var(--color-primary);
+          background: rgba(37, 99, 235, 0.2);
+          color: #60A5FA;
         }
         .section-sub.light {
-          color: rgba(255,255,255,0.5);
+          color: rgba(255,255,255,0.7);
         }
         .port-grid {
           display: grid;
@@ -863,16 +870,16 @@ export default function Homepage({ onOpenLogin }) {
           gap: 8px;
           padding: 14px;
           font-size: 16px; font-weight: 700;
-          background: var(--color-primary);
+          background: linear-gradient(135deg, #0F2C59 0%, #1E3E62 100%);
           color: #fff;
           border: none; border-radius: 12px;
           cursor: pointer;
           transition: all 0.25s ease;
         }
         .submit-btn:hover {
-          background: var(--color-primary-hover);
+          background: linear-gradient(135deg, #1E3E62 0%, #2563EB 100%);
           transform: translateY(-2px);
-          box-shadow: var(--shadow-md);
+          box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
         }
         .submit-ok {
           text-align: center;
