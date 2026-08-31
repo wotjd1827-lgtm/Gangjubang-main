@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gangjubang.com/sitemap.xml

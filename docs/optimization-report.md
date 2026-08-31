@@ -79,6 +79,13 @@
   - Google Fonts 구글 폰트 `Noto Serif KR` 웹폰트 패키지([index.html](file:///c:/Users/김재성/OneDrive/바탕 화면/midcampus/Gangjubang-main/Gangjubang-main/index.html)) 탑재
   - CSS 전역 시스템 서체 변수(`--font-primary`, `--font-serif`)를 `Noto Serif KR`, `Nanum Myeongjo`, `Batang`, `serif` 명조 서체 라인으로 교체하여 클래식하고 품격 있는 브랜드 타이포그래피 완성
 
+### 2.7. 네이버 검색엔진(서치어드바이저) 등록 및 SEO 기본 설정 (`robots.txt`, `sitemap.xml`, `index.html`)
+- **작업 브랜치**: `feature/naver-seo-setup` 신규 생성 후 PR 워크플로우 준수
+- **개선 내역**:
+  - `public/robots.txt` 신규 생성: 모든 크롤러 Bot(네이버 Yeti 포함) 수집 허용 및 XML 사이트맵 위치 지정
+  - `public/sitemap.xml` 신규 생성: 표준 XML 사이트맵 규격 작성 (`https://gangjubang.com/`, `https://gangjubang.com/signup`)
+  - `index.html` 표준 대표 URL 태그 추가: `<link rel="canonical" href="https://gangjubang.com/" />` 탑재 (기존 title, description, og 메타 태그 무결성 유지)
+
 ---
 
 ## 3. 하네스 4대 검증 결과 (Git Push Guard Check)
