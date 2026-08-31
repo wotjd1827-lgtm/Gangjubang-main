@@ -1,10 +1,9 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/((?!assets/|favicon.svg|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css)).*)",
+      "source": "/((?!assets/|favicon.svg|robots.txt|sitemap.xml|naver.*|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|html|xml|txt)).*)",
       "destination": "/index.html"
     }
   ]
