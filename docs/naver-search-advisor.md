@@ -36,12 +36,12 @@
    ```html
    <meta name="naver-site-verification" content="발급받은_32자리_알파벳_숫자_코드" />
    ```
-3. 프로젝트의 `index.html` 파일에 발급받은 코드(`32541d9e6f81e0463a867a092ba0d634`)가 적용되어 있습니다.
+3. 프로젝트의 `index.html` 파일에 발급받은 코드(`758c2226045e08b6752e2243793db8881cb3ca14`)가 적용되어 있습니다.
    ```html
    <!-- 적용 완료 태그 -->
-   <meta name="naver-site-verification" content="32541d9e6f81e0463a867a092ba0d634" />
+   <meta name="naver-site-verification" content="758c2226045e08b6752e2243793db8881cb3ca14" />
    ```
-4. 또는 **[HTML 파일 업로드]** 방식을 선택한 경우, `public/naver32541d9e6f81e0463a867a092ba0d634.html` 파일이 탑재되어 있습니다.
+4. 또는 **[HTML 파일 업로드]** 방식을 선택한 경우, `public/naver758c2226045e08b6752e2243793db8881cb3ca14.html` 파일이 탑재되어 있습니다.
 5. 소스 코드가 호스팅 서버(Vercel 등)에 배포(Git Push)된 후, 네이버 서치어드바이저 화면 하단의 **[소유 확인]** 버튼을 클릭합니다.
 
 ### Step 4: 사이트맵(Sitemap) 및 RSS 제출
