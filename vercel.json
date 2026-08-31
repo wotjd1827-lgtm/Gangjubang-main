@@ -1,6 +1,7 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "cleanUrls": false,
   "rewrites": [
     {
       "source": "/((?!assets/|favicon.svg|robots.txt|sitemap.xml|naver.*|.*\\.(?:png|jpg|jpeg|gif|svg|ico|js|css|html|xml|txt)).*)",
