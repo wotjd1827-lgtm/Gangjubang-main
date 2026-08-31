@@ -16,9 +16,9 @@
 
 ### Step 3: 소유권 확인 (HTML 태그 방식)
 1. 확인 방법 중 **[HTML 태그]** 섹션을 클릭하여 펼칩니다.
-2. 표시되는 메타태그를 복사합니다:
+2. 표시되는 메타태그를 적용 완료했습니다:
    ```html
-   <meta name="google-site-verification" content="발급받은_구글_인증_코드" />
+   <meta name="google-site-verification" content="TlwRqZgoKU4QjwVSbQwv3JHyFKVuv3Onc68HDdH-rTI" />
    ```
 3. 메타태그를 AI 채팅창에 전달하면 `index.html`에 적용 후 실서버 배포를 완료합니다.
 4. 구글 서치 콘솔 화면으로 돌아가 **[확인]** 버튼을 클릭합니다.
