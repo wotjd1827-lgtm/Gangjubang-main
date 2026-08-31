@@ -7,5 +7,5 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 
-Sitemap: https://gangjubang.com/sitemap.xml
+Sitemap: https://gangjubang-main.vercel.app/sitemap.xml
 
